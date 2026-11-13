@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meu dinheiro">
+<meta name="theme-color" content="#0f0f0e">
+<meta name="robots" content="noindex, nofollow">
+<link rel="apple-touch-icon" href="icone.png">
+<title>Meu dinheiro</title>
+<style>
+html, body { margin: 0; height: 100%; background: #0f0f0e; overflow: hidden; }
+iframe { position: fixed; left: 0; top: env(safe-area-inset-top); width: 100%;
+  height: calc(100% - env(safe-area-inset-top)); border: 0; background: #0f0f0e; }
+</style>
+</head>
+<body>
+<iframe id="p" title="Meu dinheiro" allow="clipboard-write"></iframe>
+<script>
+(function () {
+  var BASE = 'https://script.google.com/macros/s/AKfycbyF-lVKNXhHHuqcXLgBgCLnY4AKqHavI4c2LsocxmEd9biIquBIfp2GEkclFB-O1p8/exec';
+  var k = (location.hash.match(/k=([0-9a-zA-Z]+)/) || [])[1];
+  try { if (k) localStorage.setItem('md_codigo', k); else k = localStorage.getItem('md_codigo'); } catch (e) {}
+  document.getElementById('p').src = BASE + (k ? '?k=' + encodeURIComponent(k) : '');
+})();
+</script>
+</body>
+</html>
