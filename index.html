@@ -16,16 +16,64 @@
 html, body { margin: 0; height: 100%; background: #0f0f0e; overflow: hidden; }
 iframe { position: fixed; left: 0; top: env(safe-area-inset-top); width: 100%;
   height: calc(100% - env(safe-area-inset-top)); border: 0; background: #0f0f0e; }
+#entrada { position: fixed; inset: 0; align-items: center; justify-content: center; padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #f2f1ee; }
+#form { width: 100%; max-width: 340px; }
+#form h1 { margin: 0 0 8px; font-size: 24px; font-weight: 700; }
+#form p { margin: 0 0 18px; font-size: 14px; line-height: 1.45; color: #a3a19b; }
+#form input { box-sizing: border-box; width: 100%; padding: 14px; font-size: 16px; color: #f2f1ee;
+  background: #1b1b19; border: 1px solid #33322f; border-radius: 12px; outline: none; }
+#form input:focus { border-color: #3b82f6; }
+#form button { width: 100%; margin-top: 12px; padding: 14px; font-size: 16px; font-weight: 650; color: #fff;
+  background: #2563eb; border: 0; border-radius: 12px; }
+#form button:disabled { opacity: .6; }
 </style>
 </head>
 <body>
-<iframe id="p" title="Meu dinheiro" allow="clipboard-write"></iframe>
+<iframe id="p" title="Meu dinheiro" allow="clipboard-write" style="display:none"></iframe>
+<div id="entrada" style="display:none">
+  <form id="form">
+    <h1>Meu dinheiro</h1>
+    <p id="aviso"></p>
+    <input id="cod" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" placeholder="Código de acesso">
+    <button id="ok" type="submit">Entrar</button>
+  </form>
+</div>
 <script>
 (function () {
   var BASE = 'https://script.google.com/macros/s/AKfycbyF-lVKNXhHHuqcXLgBgCLnY4AKqHavI4c2LsocxmEd9biIquBIfp2GEkclFB-O1p8/exec';
   var k = (location.hash.match(/k=([0-9a-zA-Z]+)/) || [])[1];
   try { if (k) localStorage.setItem('md_codigo', k); else k = localStorage.getItem('md_codigo'); } catch (e) {}
-  document.getElementById('p').src = BASE + (k ? '?k=' + encodeURIComponent(k) : '');
+  var quadro = document.getElementById('p'), tela = document.getElementById('entrada');
+  var campo = document.getElementById('cod'), aviso = document.getElementById('aviso'), botao = document.getElementById('ok');
+  function abrir(c) {
+    tela.style.display = 'none'; quadro.style.display = '';
+    quadro.src = BASE + '?k=' + encodeURIComponent(c);
+  }
+  function pedir(msg) {
+    quadro.style.display = 'none'; tela.style.display = 'flex';
+    aviso.textContent = msg || 'Informe o código de acesso. Ele fica salvo neste aparelho.';
+    botao.disabled = false; botao.textContent = 'Entrar';
+  }
+  // Confere o código antes de guardar. Se não der para conferir, segue em frente.
+  function conferir(c) {
+    return fetch(BASE, { method: 'POST', body: JSON.stringify({ token: c, acao: 'dados' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { return !(d && d.erro && /digo/i.test(String(d.erro))); })
+      .catch(function () { return true; });
+  }
+  document.getElementById('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var c = campo.value.trim();
+    if (!c) return;
+    botao.disabled = true; botao.textContent = 'Conferindo…';
+    conferir(c).then(function (certo) {
+      if (!certo) { pedir('Código incorreto. Tente novamente.'); return; }
+      try { localStorage.setItem('md_codigo', c); } catch (e) {}
+      abrir(c);
+    });
+  });
+  if (k) abrir(k); else pedir();
 })();
 </script>
 </body>
