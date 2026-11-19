@@ -57,9 +57,13 @@ iframe { display: block; width: 100%; height: 100%; border: 0; background: trans
   var quadro = document.getElementById('p'), tela = document.getElementById('entrada');
   var campo = document.getElementById('cod'), aviso = document.getElementById('aviso'), botao = document.getElementById('ok');
   var carregando = document.getElementById('carregando'), msg = document.getElementById('msg');
+  // Safari: altura do iframe em pixels, igual à da caixa (porcentagem às vezes vira 150px)
+  var caixa = document.getElementById('caixa');
+  function medir() { quadro.style.height = caixa.clientHeight + 'px'; }
+  window.addEventListener('resize', medir); window.addEventListener('orientationchange', function () { setTimeout(medir, 300); });
   function abrir(c) {
     var url = BASE + '?k=' + encodeURIComponent(c);
-    tela.style.display = 'none'; quadro.style.display = '';
+    tela.style.display = 'none'; quadro.style.display = ''; medir();
     carregando.className = ''; msg.textContent = 'Carregando…';
     document.getElementById('direto').href = url;
     // se o Google não mostrar o painel aqui dentro, oferece abrir direto
