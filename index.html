@@ -17,7 +17,15 @@ html, body { margin: 0; height: 100%; min-height: 100vh; background: #0f0f0e; ov
 /* caixa presa abaixo do relógio e no fundo real da tela (inclui a área da barrinha do iPhone);
    o iframe ocupa 100% dela — iframe sozinho com top/bottom fica com 150px no Safari */
 #caixa { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top); bottom: 0; background: #0f0f0e; }
-iframe { display: block; width: 100%; height: 100%; border: 0; background: #0f0f0e; }
+iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
+/* aparece atrás do painel enquanto o Google carrega (pode levar uns 10 s) */
+#carregando { position: absolute; inset: 0; z-index: 2; background: #0f0f0e; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #a3a19b; font-size: 15px; text-align: center; padding: 24px; }
+#carregando .bola { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #33322f; border-top-color: #56c288; animation: gira .9s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+#carregando a { display: none; color: #fff; background: #2563eb; padding: 12px 18px; border-radius: 12px; text-decoration: none; font-weight: 650; }
+#carregando.demorou a { display: inline-block; }
+#carregando.pronto { display: none; }
 #entrada { position: fixed; inset: 0; align-items: center; justify-content: center; padding: 24px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #f2f1ee; }
 #form { width: 100%; max-width: 340px; }
@@ -32,7 +40,7 @@ iframe { display: block; width: 100%; height: 100%; border: 0; background: #0f0f
 </style>
 </head>
 <body>
-<div id="caixa"><iframe id="p" title="Meu dinheiro" allow="clipboard-write" style="display:none"></iframe></div>
+<div id="caixa"><div id="carregando" class="pronto"><div class="bola"></div><div id="msg">Carregando…</div><a id="direto" href="#">Abrir o painel direto</a></div><iframe id="p" title="Meu dinheiro" allow="clipboard-write" style="display:none"></iframe></div>
 <div id="entrada" style="display:none">
   <form id="form">
     <h1>Meu dinheiro</h1>
@@ -48,9 +56,22 @@ iframe { display: block; width: 100%; height: 100%; border: 0; background: #0f0f
   try { if (k) localStorage.setItem('md_codigo', k); else k = localStorage.getItem('md_codigo'); } catch (e) {}
   var quadro = document.getElementById('p'), tela = document.getElementById('entrada');
   var campo = document.getElementById('cod'), aviso = document.getElementById('aviso'), botao = document.getElementById('ok');
+  var carregando = document.getElementById('carregando'), msg = document.getElementById('msg');
   function abrir(c) {
+    var url = BASE + '?k=' + encodeURIComponent(c);
     tela.style.display = 'none'; quadro.style.display = '';
-    quadro.src = BASE + '?k=' + encodeURIComponent(c);
+    carregando.className = ''; msg.textContent = 'Carregando…';
+    document.getElementById('direto').href = url;
+    // se o Google não mostrar o painel aqui dentro, oferece abrir direto
+    var espera = setTimeout(function () {
+      carregando.className = 'demorou';
+      msg.textContent = 'Está demorando. Se continuar assim, abra o painel direto:';
+    }, 20000);
+    // o painel avisa (postMessage 'md-pronto') quando terminou de desenhar
+    window.addEventListener('message', function (ev) {
+      if (ev.data === 'md-pronto') { clearTimeout(espera); carregando.className = 'pronto'; }
+    });
+    quadro.src = url;
   }
   function pedir(msg) {
     quadro.style.display = 'none'; tela.style.display = 'flex';
